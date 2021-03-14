@@ -58,5 +58,5 @@ If you desire immediate response, please kindly raise issues to us or scan the b
 ![Communication](images/communication.png)
 
 ## License
-
+   
 Exchangis is under the Apache 2.0 License. See the [License](LICENSE) file for details.
