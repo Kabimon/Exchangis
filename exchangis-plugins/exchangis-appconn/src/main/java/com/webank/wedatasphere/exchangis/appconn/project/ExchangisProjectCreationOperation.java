@@ -6,8 +6,8 @@ import com.webank.wedatasphere.dss.standard.app.structure.project.ProjectCreatio
 import com.webank.wedatasphere.dss.standard.app.structure.project.ProjectRequestRef;
 import com.webank.wedatasphere.dss.standard.app.structure.project.ProjectResponseRef;
 import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalOperationFailedException;
-import com.webank.wedatasphere.exchangis.appconn.ExchangisAppConn;
 import com.webank.wedatasphere.exchangis.appconn.config.ExchangisConfig;
+import com.webank.wedatasphere.exchangis.appconn.model.ExchangisPostAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,11 +20,16 @@ public class ExchangisProjectCreationOperation implements ProjectCreationOperati
     }
     @Override
     public ProjectResponseRef createProject(ProjectRequestRef projectRequestRef) throws ExternalOperationFailedException {
-        String url="";
+        String url=ExchangisConfig.BASEURL+"";
         SSOUrlBuilderOperation ssoUrlBuilderOperation = projectRequestRef.getWorkspace().getSSOUrlBuilderOperation().copy();
         ssoUrlBuilderOperation.setAppName(getAppName());
         ssoUrlBuilderOperation.setReqUrl(url);
         ssoUrlBuilderOperation.setWorkspace(projectRequestRef.getWorkspace().getWorkspaceName());
+
+        ExchangisPostAction exchangisPostAction = new ExchangisPostAction();
+        exchangisPostAction.setUser(projectRequestRef.getCreateBy());
+
+
         return null;
     }
 
