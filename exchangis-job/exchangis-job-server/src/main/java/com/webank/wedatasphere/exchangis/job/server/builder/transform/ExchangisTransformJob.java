@@ -6,15 +6,16 @@ import com.webank.wedatasphere.exchangis.datasource.core.vo.ExchangisJobInfoCont
 import com.webank.wedatasphere.exchangis.datasource.core.vo.ExchangisJobParamsContent;
 import com.webank.wedatasphere.exchangis.job.domain.ExchangisJobBase;
 import com.webank.wedatasphere.exchangis.job.domain.SubExchangisJob;
-import com.webank.wedatasphere.exchangis.job.domain.params.JobParam;
 import com.webank.wedatasphere.exchangis.job.domain.params.JobParamSet;
 import com.webank.wedatasphere.exchangis.job.domain.params.JobParams;
-import com.webank.wedatasphere.exchangis.job.server.builder.transform.handlers.AbstractExchangisJobHandler;
+import com.webank.wedatasphere.exchangis.job.server.builder.transform.handlers.GenericSubExchangisJobHandler;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -51,21 +52,6 @@ public class ExchangisTransformJob extends ExchangisJobBase {
             if(Objects.nonNull(jobInfoContent)) {
                 this.engine = jobInfoContent.getEngine();
                 this.jobName = jobInfoContent.getSubJobName();
-                ExchangisJobDataSourcesContent dataSourcesContent = jobInfoContent.getDataSources();
-                if(Objects.nonNull(dataSourcesContent)) {
-                    Optional.ofNullable(dataSourcesContent.getSinkId()).ifPresent( sinkId ->{
-                        String[] idSerial = sinkId.split(AbstractExchangisJobHandler.ID_SPLIT_SYMBOL);
-                        if(idSerial.length > 0){
-                            this.sinkType = idSerial[0];
-                        }
-                    });
-                    Optional.ofNullable(dataSourcesContent.getSourceId()).ifPresent( sourceId ->{
-                        String[] idSerial = sourceId.split(AbstractExchangisJobHandler.ID_SPLIT_SYMBOL);
-                        if(idSerial.length > 0){
-                            this.sourceType = idSerial[0];
-                        }
-                    });
-                }
                 convertContentToParams(jobInfoContent);
             }
         }
@@ -80,23 +66,29 @@ public class ExchangisTransformJob extends ExchangisJobBase {
 
         private void convertContentToParams(ExchangisJobInfoContent content){
             setIntoParams(REALM_JOB_DATA_SOURCE, () -> Json.convert(content.getDataSources(), Map.class, String.class, String.class));
-            setIntoParams(REALM_JOB_MAPPING, () -> Json.convert(content.getTransforms(), Map.class, String.class, Object.class));
+            setIntoParams(REALM_JOB_COLUMN_MAPPING, () -> Json.convert(content.getTransforms(), Map.class, String.class, Object.class));
             if(Objects.nonNull(content.getParams())){
                 if(Objects.nonNull(content.getParams().getSources())) {
-                    setIntoParams(REALM_JOB_CONTENT_SOURCE, () -> {
+                    JobParamSet paramSet = setIntoParams(REALM_JOB_CONTENT_SOURCE, () -> {
                         List<ExchangisJobParamsContent.ExchangisJobParamsItem> items = content.getParams().getSources();
                         return items.stream().filter(item -> StringUtils.isNotBlank(item.getConfigKey())).collect
                                 (Collectors.toMap(ExchangisJobParamsContent.ExchangisJobParamsItem::getConfigKey,
                                         ExchangisJobParamsContent.ExchangisJobParamsItem::getConfigValue));
                     });
+                    if(Objects.nonNull(paramSet)) {
+                        this.sourceType = resolveDataSourceId(content.getDataSources().getSourceId(), paramSet);
+                    }
                 }
                 if(Objects.nonNull(content.getParams().getSinks())) {
-                    setIntoParams(REALM_JOB_CONTENT_SINK, () -> {
+                    JobParamSet paramSet = setIntoParams(REALM_JOB_CONTENT_SINK, () -> {
                         List<ExchangisJobParamsContent.ExchangisJobParamsItem> items = content.getParams().getSinks();
                         return items.stream().filter(item -> StringUtils.isNotBlank(item.getConfigKey())).collect
                                 (Collectors.toMap(ExchangisJobParamsContent.ExchangisJobParamsItem::getConfigKey,
                                         ExchangisJobParamsContent.ExchangisJobParamsItem::getConfigValue));
                     });
+                    if(Objects.nonNull(paramSet)) {
+                       this.sinkType =  resolveDataSourceId(content.getDataSources().getSinkId(), paramSet);
+                    }
                 }
             }
             if (Objects.nonNull(content.getSettings())){
@@ -109,7 +101,7 @@ public class ExchangisTransformJob extends ExchangisJobBase {
             }
         }
 
-        private void setIntoParams(String realm, Supplier<Map<String, Object>> paramsSupplier){
+        private JobParamSet setIntoParams(String realm, Supplier<Map<String, Object>> paramsSupplier){
             Optional<Map<String,Object>> dataSourceMap = Optional.ofNullable(paramsSupplier.get());
             dataSourceMap.ifPresent( map -> {
                 JobParamSet paramSet = map.entrySet().stream().map(entry -> JobParams.newOne(entry.getKey(), entry.getValue()))
@@ -117,6 +109,29 @@ public class ExchangisTransformJob extends ExchangisJobBase {
                 LOG.trace("Set params into sub exchangis job, realm: [" + realm + "], paramSet: [" + paramSet.toString() + "]");
                 super.addRealmParams(realm, paramSet);
             });
+            return getRealmParams(realm);
         }
+
+        /**
+         *
+         * @param dataSourceId
+         * @param paramSet
+         * @return return data source type
+         */
+        private String resolveDataSourceId(String dataSourceId, JobParamSet paramSet){
+            AtomicReference<String[]> result = new AtomicReference<>(new String[]{});
+            Optional.ofNullable(dataSourceId).ifPresent( id ->
+                    result.set(id.split(GenericSubExchangisJobHandler.ID_SPLIT_SYMBOL)));
+            String[] idSerial = result.get();
+            if(idSerial.length > 0){
+                if(idSerial.length >= 4){
+                    paramSet.add(JobParams.newOne("database", idSerial[2], true));
+                    paramSet.add(JobParams.newOne("table", idSerial[3], true));
+                }
+               return idSerial[0];
+            }
+            return null;
+        }
+
     }
 }

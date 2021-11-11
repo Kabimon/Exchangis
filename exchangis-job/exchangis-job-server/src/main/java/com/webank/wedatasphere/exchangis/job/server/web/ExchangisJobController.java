@@ -12,6 +12,7 @@ import com.webank.wedatasphere.exchangis.job.enums.EngineTypeEnum;
 import com.webank.wedatasphere.exchangis.job.exception.ExchangisJobException;
 import com.webank.wedatasphere.exchangis.job.exception.ExchangisJobExceptionCode;
 import com.webank.wedatasphere.exchangis.job.launcher.builder.ExchangisLauncherJob;
+import com.webank.wedatasphere.exchangis.job.server.builder.SpringExchangisJobBuilderManager;
 import com.webank.wedatasphere.exchangis.job.server.builder.transform.ExchangisTransformJob;
 import com.webank.wedatasphere.exchangis.job.server.dto.ExchangisJobBasicInfoDTO;
 import com.webank.wedatasphere.exchangis.job.server.dto.ExchangisJobContentDTO;
@@ -160,6 +161,11 @@ public class ExchangisJobController {
             throw new ExchangisJobException(ExchangisJobExceptionCode.JOB_BUILDER_ERROR.getCode(),
                     "The result set of launcher job is empty, please examine your job entity, [ 生成LauncherJob为空 ]", null);
         }
+        launcherJobs.forEach(launcherJob ->{
+            String launchName = launcherJob.getLaunchName();
+            //LauncherJob launcherjob = LaunchManager.getLauncher(launchName);
+            //launcherJob.launch(LauncherJob)
+        });
         //TODO do launch
         return Message.ok();
     }
@@ -180,7 +186,5 @@ public class ExchangisJobController {
     }
 
 
-    public static void main(String[] args) throws Exception{
 
-    }
 }

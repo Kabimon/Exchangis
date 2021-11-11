@@ -30,7 +30,7 @@ public class SubExchangisJob extends ExchangisJobBase{
 
     public static final String REALM_JOB_CONTENT_SOURCE = "job.realm.content.source";
 
-    public static final String REALM_JOB_MAPPING = "job.realm.mappings";
+    public static final String REALM_JOB_COLUMN_MAPPING = "job.realm.column-mappings";
 
     /**
      * Realm params set
@@ -61,6 +61,7 @@ public class SubExchangisJob extends ExchangisJobBase{
         this.sinkType = sinkType;
     }
 
+
     /**
      * Add
      * @param realm realm info
@@ -84,9 +85,9 @@ public class SubExchangisJob extends ExchangisJobBase{
      * @param realm realm info
      * @return map
      */
-    public Map<String, Object> getParamsToMap(String realm){
+    public Map<String, Object> getParamsToMap(String realm, boolean isTemp){
         JobParamSet jobParamSet = getRealmParams(realm);
-        return jobParamSet.toList().stream().collect(
+        return jobParamSet.toList(isTemp).stream().collect(
                 Collectors.toMap(JobParam::getStrKey, JobParam::getValue));
     }
 
@@ -98,5 +99,11 @@ public class SubExchangisJob extends ExchangisJobBase{
         return realmParamSet.values().stream().flatMap(realmParam -> realmParam.toList().stream())
                 .collect(Collectors.toMap(JobParam::getStrKey, JobParam::getValue));
     }
+
+    public Map<String, Object> getParamsToMap(boolean isTemp){
+        return realmParamSet.values().stream().flatMap(realmParam -> realmParam.toList(isTemp).stream())
+                .collect(Collectors.toMap(JobParam::getStrKey, JobParam::getValue, (left, right) -> right));
+    }
+
 
 }
