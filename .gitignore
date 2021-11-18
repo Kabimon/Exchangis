@@ -1,5 +1,5 @@
 /target/
-
+target
 
 ### STS ###
 .apt_generated
@@ -12,6 +12,7 @@
 
 ### IntelliJ IDEA ###
 .idea
+*.log
 *.iws
 *.iml
 *.ipr
@@ -26,3 +27,10 @@
 .mvn/wrapper/maven-wrapper.jar
 .mvn/wrapper/maven-wrapper.properties
 /packages/
+exchangis-server/exchangis-extds
+/logs/
+/web/package-lock.json
+package-lock.json
+.DS_Store
+
+web/dist
