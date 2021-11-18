@@ -38,9 +38,12 @@ public class ExchangisProjectDeletionOperation implements ProjectDeletionOperati
     }
     @Override
     public ProjectResponseRef deleteProject(ProjectRequestRef projectRequestRef) throws ExternalOperationFailedException {
-        Long id = projectRequestRef.getId();
-        String url=ExchangisConfig.BASEURL+"/projects/"+id;
-
+        Long projectId = projectRequestRef.getId();
+        logger.info("delete project=>projectId:{},name:{},createName:{}",projectRequestRef.getId(),projectRequestRef.getName(),projectRequestRef.getCreateBy());
+//
+//        String url = getBaseUrl() +"/projects/"+id;
+        //TODO 后续修改
+        String url ="";
         ExchangisDeleteAction exchangisPostAction = new ExchangisDeleteAction();
         exchangisPostAction.setUser(projectRequestRef.getCreateBy());
 
@@ -75,7 +78,7 @@ public class ExchangisProjectDeletionOperation implements ProjectDeletionOperati
             throw new ExternalOperationFailedException(31020, "failed to parse response json", e);
         }
         exchangisProjectResponseRef.setAppInstance(structureService.getAppInstance());
-        exchangisProjectResponseRef.setProjectRefId(id);
+        exchangisProjectResponseRef.setProjectRefId(projectId);
         exchangisProjectResponseRef.setErrorMsg(errorMsg);
         return exchangisProjectResponseRef;
     }
@@ -84,7 +87,9 @@ public class ExchangisProjectDeletionOperation implements ProjectDeletionOperati
     public void init() {
 
     }
-
+    private String getBaseUrl(){
+        return structureService.getAppInstance().getBaseUrl() + ExchangisConfig.BASEURL;
+    }
     @Override
     public void setStructureService(StructureService structureService) {
         this.structureService=structureService;

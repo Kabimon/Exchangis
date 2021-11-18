@@ -13,6 +13,7 @@ import com.webank.wedatasphere.dss.standard.common.exception.operation.ExternalO
 import com.webank.wedatasphere.exchangis.appconn.config.ExchangisConfig;
 import com.webank.wedatasphere.exchangis.appconn.model.ExchangisPutAction;
 import com.webank.wedatasphere.exchangis.appconn.ref.ExchangisProjectResponseRef;
+import com.webank.wedatasphere.exchangis.appconn.utils.AppconnUtils;
 import com.webank.wedatasphere.linkis.httpclient.request.HttpAction;
 import com.webank.wedatasphere.linkis.httpclient.response.HttpResult;
 import com.webank.wedatasphere.linkis.manager.label.entity.SerializableLabel;
@@ -39,23 +40,18 @@ public class ExchangisProjectUpdateOperation implements ProjectUpdateOperation {
     }
     @Override
     public ProjectResponseRef updateProject(ProjectRequestRef projectRequestRef) throws ExternalOperationFailedException {
-        String url=ExchangisConfig.BASEURL+"/updateProject";
+        String url = getBaseUrl() +"/updateProject";
+        logger.info("update project=>projectId:{},name:{},createName:{}",projectRequestRef.getId(),projectRequestRef.getName(),projectRequestRef.getCreateBy());
 
-        List<DSSLabel> dssLabels = projectRequestRef.getDSSLabels();
-        String dssLabelStr="";
-        if(dssLabels != null && !dssLabels.isEmpty()){
-            dssLabelStr=dssLabels.stream().map(SerializableLabel::getStringValue).collect(Collectors.joining(","));
-        }
         ExchangisPutAction exchangisPutAction = new ExchangisPutAction();
         exchangisPutAction.setUser(projectRequestRef.getCreateBy());
-        exchangisPutAction.addRequestPayload(ExchangisConfig.ID,projectRequestRef.getId());
         exchangisPutAction.addRequestPayload(ExchangisConfig.WORKSPACE_NAME,projectRequestRef.getWorkspaceName());
         exchangisPutAction.addRequestPayload(ExchangisConfig.PROJECT_NAME,projectRequestRef.getName());
         exchangisPutAction.addRequestPayload(ExchangisConfig.DESCRIPTION,projectRequestRef.getDescription());
         exchangisPutAction.addRequestPayload(ExchangisConfig.EDIT_USERS,projectRequestRef.getUpdateBy());
         exchangisPutAction.addRequestPayload(ExchangisConfig.EXEC_USERS,projectRequestRef.getUpdateBy());
         exchangisPutAction.addRequestPayload(ExchangisConfig.VIEW_USERS,projectRequestRef.getUpdateBy());
-        exchangisPutAction.addRequestPayload(ExchangisConfig.TAGS,dssLabelStr);
+        exchangisPutAction.addRequestPayload(ExchangisConfig.TAGS, AppconnUtils.changeDssLabelName(projectRequestRef.getDSSLabels()));
 
         SSOUrlBuilderOperation ssoUrlBuilderOperation = projectRequestRef.getWorkspace().getSSOUrlBuilderOperation().copy();
         ssoUrlBuilderOperation.setAppName(getAppName());
@@ -98,7 +94,9 @@ public class ExchangisProjectUpdateOperation implements ProjectUpdateOperation {
     public void init() {
 
     }
-
+    private String getBaseUrl(){
+        return structureService.getAppInstance().getBaseUrl() + ExchangisConfig.BASEURL;
+    }
     @Override
     public void setStructureService(StructureService structureService) {
         this.structureService=structureService;
