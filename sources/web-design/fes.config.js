@@ -5,7 +5,7 @@ const lang = window.localStorage.getItem('lang') || 'zh-cn';
 export default {
     mode: 'vertical',
     theme: 'dark',
-    fesName: '数据交换',
+    fesName: ' ',
     roles: {
         unLogin: ['/ds/newManager', '/', '/login', '/job', '/task', '/help'],
         user: ['/ds/newManager', '/', '/login', '/ds/dataTemplate', '/job', '/task', '/help', '/group', '/group/groupDetail'],

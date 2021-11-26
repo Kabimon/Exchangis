@@ -1,5 +1,8 @@
 @import '../addIconfont/iconfont.css';
 @import 'variables.scss';
+.layout-left-body {
+    padding-top: 15px;
+}
 .layout-left-logo {
     img {
         display: none;
@@ -8,6 +11,7 @@
         font-weight: 700;
         font-size: 20px;
     }
+    display: none;
 }
 .ui-modal-dialog {
     overflow:visible!important;
